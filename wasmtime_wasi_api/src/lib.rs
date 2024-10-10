@@ -4,11 +4,12 @@ extern crate alloc;
 
 use alloc::{string::{String, ToString}, vec::Vec};
 pub use wasmtime;
-use wasmtime::{Engine, Config, Linker, Module};
+use wasmtime::{Engine, Linker, Module};
 
 mod data_buffer;
-mod wasi;
+// mod capis;
 mod types;
+mod wasi;
 
 pub struct LibosCtx {
     pub id: String
@@ -16,10 +17,6 @@ pub struct LibosCtx {
 
 pub fn build_wasm(cwasm: &[u8]) -> (Engine, Module, Linker<LibosCtx>) {
     let engine: Engine = Engine::default();
-    // let engine = Engine::new(
-    //     Config::new()
-    //         .debug_info(true)
-    // ).unwrap();
     let module: Module = unsafe { Module::deserialize(&engine, cwasm) }.map_err(|e| e.to_string()).unwrap();
     let mut linker = Linker::new(&engine);
     import_all(&mut linker);
@@ -62,8 +59,50 @@ fn import_all(linker: &mut Linker<LibosCtx>) {
     linker
         .func_wrap(
             "wasi_snapshot_preview1",
+            "clock_res_get",
+            wasi::clock_res_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "clock_time_get",
+            wasi::clock_time_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "environ_get",
+            wasi::environ_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "environ_sizes_get",
+            wasi::environ_sizes_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_advise",
+            wasi::fd_advise,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
             "fd_close",
             wasi::fd_close,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_datasync",
+            wasi::fd_datasync,
         )
         .unwrap();
     linker
@@ -78,6 +117,41 @@ fn import_all(linker: &mut Linker<LibosCtx>) {
             "wasi_snapshot_preview1",
             "fd_fdstat_set_flags",
             wasi::fd_fdstat_set_flags,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_filestat_get",
+            wasi::fd_filestat_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_filestat_set_size",
+            wasi::fd_filestat_set_size,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_filestat_set_times",
+            wasi::fd_filestat_set_times,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_pread",
+            wasi::fd_pread,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_pwrite",
+            wasi::fd_pwrite,
         )
         .unwrap();
     linker
@@ -104,8 +178,29 @@ fn import_all(linker: &mut Linker<LibosCtx>) {
     linker
         .func_wrap(
             "wasi_snapshot_preview1",
+            "fd_readdir",
+            wasi::fd_readdir,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
             "fd_seek",
             wasi::fd_seek,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_sync",
+            wasi::fd_sync,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "fd_tell",
+            wasi::fd_tell,
         )
         .unwrap();
     linker
@@ -118,8 +213,78 @@ fn import_all(linker: &mut Linker<LibosCtx>) {
     linker
         .func_wrap(
             "wasi_snapshot_preview1",
+            "path_create_directory",
+            wasi::path_create_directory,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_filestat_get",
+            wasi::path_filestat_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_filestat_set_times",
+            wasi::path_filestat_set_times,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_link",
+            wasi::path_link,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
             "path_open",
             wasi::path_open,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_readlink",
+            wasi::path_readlink,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_remove_directory",
+            wasi::path_remove_directory,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_rename",
+            wasi::path_rename,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_symlink",
+            wasi::path_symlink,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "path_unlink_file",
+            wasi::path_unlink_file,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "poll_oneoff",
+            wasi::poll_oneoff,
         )
         .unwrap();
     linker
@@ -129,56 +294,47 @@ fn import_all(linker: &mut Linker<LibosCtx>) {
             wasi::proc_exit,
         )
         .unwrap();
-
-
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "path_filestat_set_times",
-    //         wasi::path_filestat_set_times,
-    //     )
-    //     .unwrap();
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "path_remove_directory",
-    //         wasi::path_remove_directory,
-    //     )
-    //     .unwrap();
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "path_rename",
-    //         wasi::path_rename,
-    //     )
-    //     .unwrap();
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "path_unlink_file",
-    //         wasi::path_unlink_file,
-    //     )
-    //     .unwrap();
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "poll_oneoff",
-    //         wasi::poll_oneoff,
-    //     )
-    //     .unwrap();
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "random_get",
-    //         wasi::random_get,
-    //     )
-    //     .unwrap();
-    // linker
-    //     .func_wrap(
-    //         "wasi_snapshot_preview1",
-    //         "sched_yield",
-    //         wasi::sched_yield,
-    //     )
-    //     .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "random_get",
+            wasi::random_get,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "sched_yield",
+            wasi::sched_yield,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "sock_accept",
+            wasi::sock_accept,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "sock_recv",
+            wasi::sock_recv,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "sock_send",
+            wasi::sock_send,
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "wasi_snapshot_preview1",
+            "sock_shutdown",
+            wasi::sock_shutdown,
+        )
+        .unwrap();
 
 }

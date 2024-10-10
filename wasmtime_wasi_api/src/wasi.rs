@@ -7,9 +7,8 @@ use ms_std::println;
 #[cfg(feature = "log")]
 use alloc::format;
 
-use alloc::{borrow::ToOwned, string::{String, ToString}, sync::Arc, vec::Vec};
+use alloc::{borrow::ToOwned, string::{String, ToString}, vec::Vec};
 use hashbrown::HashMap;
-use sjlj::{longjmp, JumpBuf};
 use spin::{Mutex, MutexGuard};
 use wasmtime::Caller;
 
@@ -29,7 +28,10 @@ lazy_static::lazy_static! {
 fn get_hashmap_wasi_state_mut() -> MutexGuard<'static, HashMap<String, WasiState>> {
     WASI_STATE.lock()
 }
-fn get_wasi_state<'a>(id: &str, map: &'a MutexGuard<'static, HashMap<String, WasiState>>) -> &'a WasiState {
+fn get_wasi_state<'a>(
+    id: &str,
+    map: &'a MutexGuard<'static, HashMap<String, WasiState>>,
+) -> &'a WasiState {
     let wasi_state = map.get(id).unwrap();
     if wasi_state.args.len() == 0 {
         panic!("WASI_STATE uninit")
@@ -57,10 +59,6 @@ fn get_fd2path<'a>(fd: u32, map: &'a MutexGuard<'static, HashMap<u32, String>>) 
 fn set_fd2path(fd: u32, path: String) {
     let mut map = get_hashmap_fd2path_mut();
     map.insert(fd, path);
-}
-
-lazy_static::lazy_static! {
-    pub static ref JMP_BUF_MAP: Mutex<HashMap<String, Arc<JumpBuf>>> = Mutex::new( HashMap::new() );
 }
 
 pub fn args_get(mut caller: Caller<'_, LibosCtx>, argv: i32, argv_buf: i32) -> i32 {
@@ -524,7 +522,7 @@ pub fn fd_readdir(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32, buf_len: 
             
             memory.write(&mut caller, cur_buf as usize, part_buf).unwrap();
             memory.write(&mut caller, bufused as usize, &buf_len.to_ne_bytes()).unwrap();
-            forget(entries);
+            // forget(entries);
             return Errno::Success as i32
         }
 
@@ -537,7 +535,7 @@ pub fn fd_readdir(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32, buf_len: 
         bufused_len += item.entry_name.len() as u32;
     }
     memory.write(&mut caller, bufused as usize, &bufused_len.to_ne_bytes()).unwrap();
-    forget(entries);
+    // forget(entries);
     Errno::Success as i32
 }
 
@@ -659,7 +657,7 @@ pub fn path_filestat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, flags: i32, 
             println!("[WASI ERR] path error msg: {:?}", _e);
         }
         
-        forget(_e);
+        // forget(_e);
         return Errno::Noent as i32;
     } else {
         path_fd.unwrap() as u32
@@ -756,7 +754,7 @@ pub fn path_open(mut caller: Caller<'_, LibosCtx>, fd: i32, dirflags: i32, path_
             println!("[WASI ERR] path error msg: {:?}", _e);
         }
 
-        forget(_e);
+        // forget(_e);
         return Errno::Noent as i32;
     } else {
         path_fd.unwrap() as u32
@@ -849,20 +847,7 @@ pub fn proc_exit(mut caller: Caller<'_, LibosCtx>, code: i32) {
         // An exit code of 0 indicates successful termination of the program.
         println!("args: code: {:?}", code);
     }
-    
-    match code {
-        0 => {
-            let caller_id = &caller.data().id;
-            // let map = get_jmp_buf_mut();
-            let jmpbuf = { 
-                Arc::clone(JMP_BUF_MAP.lock().get(caller_id).unwrap())
-            };
-            // let jmpbuf = _jmpbuf.borrow_mut();            // drop(map);
-            
-            unsafe { longjmp(jmpbuf.as_ref(), 1) };
-        },
-        _ => { panic!("[ERR] proc_exit got error code {:?}", code); }
-    }
+    // nothing to do
 }
 
 pub fn random_get(mut caller: Caller<'_, LibosCtx>, buf: i32, buf_len: i32) -> i32 {
