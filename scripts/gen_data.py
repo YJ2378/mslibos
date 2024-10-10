@@ -35,4 +35,4 @@ def gen_parallel_sort(file_num: int, total_size: int):
 
 
 if __name__ == "__main__":
-    gen_parallel_sort(1, 60 * 1024)
+    gen_parallel_sort(1, 1024 * 1024)

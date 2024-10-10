@@ -1,15 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-#define MAX_ARRAY_LENGTH 10000
-#define MAX_BUFFER_SIZE 75000
+#define MAX_ARRAY_LENGTH 160000
+#define MAX_BUFFER_SIZE 1600000
 
 // 比较函数，用于 qsort
 int compare(const void *a, const void *b) {
     return (*(int *)a - *(int *)b); // 升序排序
+}
+
+int array[MAX_ARRAY_LENGTH];
+
+char nc(FILE *stream) {
+  static char buf[1<<20], *p1 = buf, *p2 = buf;
+  return p1 == p2 && (p2 = (p1 = buf) + fread(buf, 1, 1 << 20, stream), p1 == p2) ? EOF : *p1 ++;
+}
+
+int read(FILE *stream) {
+  int x = 0, ch = nc(stream);
+  for (; ch < '0' || ch > '9'; ch = nc(stream));
+  for (; ch >= '0' && ch <= '9'; ch = nc(stream))
+    x = (x << 1) + (x << 3) + (ch ^ 48);
+  return x;
 }
 
 int main(int argc, char* argv[]) {
@@ -25,20 +41,30 @@ int main(int argc, char* argv[]) {
         perror("Failed to open input file\n");
         exit(EXIT_FAILURE);
     }
-    int array[MAX_ARRAY_LENGTH];
+    
     int index = 0;
-    char line[1024];
-    while (fgets(line, sizeof(line), file)) {
-        char *token = strtok(line, " \n"); // 以空格和换行作为分隔符
-        while (token != NULL) {
-            array[index++] = atoi(token);
-            token = strtok(NULL, " \n"); //读取下一个单词
-        }
-    }
+    // char line[1024];
+    // while (fgets(line, sizeof(line), file)) {
+    //     char *token = strtok(line, " \n"); // 以空格和换行作为分隔符
+    //     while (token != NULL) {
+    //         array[index++] = atoi(token);
+    //         token = strtok(NULL, " \n"); //读取下一个单词
+    //     }
+    // }
+    char number[10];
+    while (array[index++] = read(file));
+    int now = time(NULL);
+    printf("qwq");
+    printf("qeq %ld read finished", now);
+    // while (fscanf(file, "%s", number) != EOF) {
+    //     array[index] = atoi(number);
+    //     // printf("array[%d]: %d\n", index, array[index]);
+    //     index++;
+    // }
     printf("sorter_%d read finished!\n", id);
     printf("index: %d\n", index);
     fclose(file);
-    qsort(array, index, sizeof(int), compare);
+    // qsort(array, index, sizeof(int), compare);
 
     printf("sorter_%d sort finished!\n", id);
 
@@ -72,7 +98,7 @@ int main(int argc, char* argv[]) {
     }
 
     // printf("sorter_%d pivot finished!\n", id);
-
+    printf("%ld before alloc", now);
     char slot_name[20];
     sprintf(slot_name, "sorter_%d", id);
     char *buffer;
@@ -81,7 +107,9 @@ int main(int argc, char* argv[]) {
         perror("malloc error");
         return 1;
     }
+    printf("%ld alloc finished", now);
     memset(buffer, 0, bufferSize * sizeof(char));
+    printf("%ld memset finished", now);
     buffer[0] = '\0'; // 初始化为空字符串
     for (int i = 0; i < index; i++) {
         char temp[12]; // 临时缓冲区，注意要足够大以容纳最大整数和一个空格
