@@ -7,6 +7,8 @@ def gen_word_count(file_num: int, total_size: int):
     from faker import Faker
 
     fake = Faker()
+    # 设置种子
+    Faker.seed(42)  # 使用固定的种子值
     one_size = int(total_size / file_num)
 
     for i in range(file_num):
@@ -35,4 +37,5 @@ def gen_parallel_sort(file_num: int, total_size: int):
 
 
 if __name__ == "__main__":
-    gen_parallel_sort(1, 1024 * 1024)
+    gen_word_count(1, 300 * 1024 * 1024)
+    # gen_parallel_sort(1, 1 * 1024 * 1024)

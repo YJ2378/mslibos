@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 
 #define MAX_ARRAY_LENGTH 160000
-#define MAX_BUFFER_SIZE 1600000
+#define MAX_BUFFER_SIZE 5000000
 
 // 比较函数，用于 qsort
 int compare(const void *a, const void *b) {
@@ -20,7 +21,7 @@ char nc(FILE *stream) {
   return p1 == p2 && (p2 = (p1 = buf) + fread(buf, 1, 1 << 20, stream), p1 == p2) ? EOF : *p1 ++;
 }
 
-int read(FILE *stream) {
+int readfile(FILE *stream) {
   int x = 0, ch = nc(stream);
   for (; ch < '0' || ch > '9'; ch = nc(stream));
   for (; ch >= '0' && ch <= '9'; ch = nc(stream))
@@ -51,22 +52,26 @@ int main(int argc, char* argv[]) {
     //         token = strtok(NULL, " \n"); //读取下一个单词
     //     }
     // }
+    // time_t now;
+    // time(&now);
+    // printf("%ld read start\n", now);
+    write(1, "read start\n", sizeof("read start\n"));
     char number[10];
-    while (array[index++] = read(file));
-    int now = time(NULL);
-    printf("qwq");
-    printf("qeq %ld read finished", now);
+    while (array[index++] = readfile(file));
+    // time(&now);
+    // printf("%ld read finished\n", now);
+    write(1, "read finished\n", sizeof("read finished\n"));
     // while (fscanf(file, "%s", number) != EOF) {
     //     array[index] = atoi(number);
     //     // printf("array[%d]: %d\n", index, array[index]);
     //     index++;
     // }
-    printf("sorter_%d read finished!\n", id);
-    printf("index: %d\n", index);
+    // printf("sorter_%d read finished!\n", id);
+    // printf("index: %d\n", index);
     fclose(file);
     // qsort(array, index, sizeof(int), compare);
 
-    printf("sorter_%d sort finished!\n", id);
+    // printf("sorter_%d sort finished!\n", id);
 
     if (merger_num > 1 && id == 0) {
         int pivot[merger_num-1];
@@ -98,7 +103,9 @@ int main(int argc, char* argv[]) {
     }
 
     // printf("sorter_%d pivot finished!\n", id);
-    printf("%ld before alloc", now);
+    // time(&now);
+    // printf("%ld before alloc\n", now);
+    write(1, "alloc start\n", sizeof("alloc start\n"));
     char slot_name[20];
     sprintf(slot_name, "sorter_%d", id);
     char *buffer;
@@ -107,19 +114,29 @@ int main(int argc, char* argv[]) {
         perror("malloc error");
         return 1;
     }
-    printf("%ld alloc finished", now);
+    // time(&now);
+    // printf("%ld alloc finished\n", now);
+    write(1, "alloc finished\n", sizeof("alloc finished\n"));
     memset(buffer, 0, bufferSize * sizeof(char));
-    printf("%ld memset finished", now);
-    buffer[0] = '\0'; // 初始化为空字符串
+    // time(&now);
+    // printf("%ld memset finished\n", now);
+    write(1, "memset finished\n", sizeof("memset finished\n"));
+    // buffer[0] = '\0'; // 初始化为空字符串
+    char *ptr = buffer;
     for (int i = 0; i < index; i++) {
         char temp[12]; // 临时缓冲区，注意要足够大以容纳最大整数和一个空格
         snprintf(temp, sizeof(temp), "%d ", array[i]); // 将整数转换为字符串，并加上空格
-        strcat(buffer, temp); // 追加到 buffer
+        strncpy(ptr, temp, strlen(temp));
+        ptr += strlen(temp);
+        // strcat(buffer, temp); // 追加到 buffer
     }
-    buffer[strlen(buffer) - 1] = '\0';
-
+    *ptr++ = '\0';
+    // buffer[strlen(buffer) - 1] = '\0';
+    write(1, "buffer make finished\n", sizeof("buffer make finished\n"));
     buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
+    write(1, "buffer register finished\n", sizeof("buffer register finished\n"));
     free(buffer);
-    printf("sorter_%d all finished!\n", id);
+    // printf("sorter_%d all finished!\n", id);
+    write(1, "all finished\n", sizeof("all finished\n"));
     return 0;
 }

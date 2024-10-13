@@ -3,5 +3,24 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.autopep8"
     },
-    "python.formatting.provider": "none"
+    "python.formatting.provider": "none",
+    "C_Cpp.default.compilerPath": "/usr/bin/clang++",
+    "files.associations": {
+        "array": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp",
+        "__hash_table": "cpp",
+        "__split_buffer": "cpp",
+        "deque": "cpp",
+        "iterator": "cpp",
+        "queue": "cpp",
+        "random": "cpp",
+        "stack": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "iosfwd": "cpp"
+    }
 }

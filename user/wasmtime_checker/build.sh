@@ -1,4 +1,4 @@
-$CC checker.c -o checker.wasm
+$CC checker.c -o checker.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
 
 wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n checker.wasm
 

@@ -1,4 +1,4 @@
-$CC spliter.c -o spliter.wasm
+$CC spliter.c -o spliter.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
 
 wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n spliter.wasm
 

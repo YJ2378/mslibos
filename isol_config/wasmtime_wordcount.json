@@ -13,6 +13,10 @@
         "libmm.so"
       ],
       [
+        "time",
+        "libtime.so"
+      ],
+      [
         "fatfs",
         "libfatfs.so"
       ]
@@ -27,7 +31,7 @@
         "libwasmtime_reducer.so"
       ]
     ],
-    "fs_image": "fs_images/fatfs.img",
+    "fs_image": "fs_images/fatfs_large.img",
     "groups": [
       {
         "list": [
@@ -35,14 +39,6 @@
         ],
         "args": {
           "reducer_num": "1"
-        }
-      },
-      {
-        "list": [
-          "reducer"
-        ],
-        "args": {
-          "mapper_num": "1"
         }
       }
     ]

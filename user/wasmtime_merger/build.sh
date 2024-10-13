@@ -1,4 +1,4 @@
-$CC merger.c -o merger.wasm
+$CC merger.c -o merger.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
 
 wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n merger.wasm
 

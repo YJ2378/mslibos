@@ -45,7 +45,7 @@ fn func_body(my_id: &str, sorter_num: u64, merger_num: u64) -> Result<()> {
     let instance = linker.instantiate(&mut store, &module)?;
 
     let mut memory = instance.get_memory(&mut store, "memory").unwrap();
-    let pages = memory.grow(&mut store, 40).unwrap();
+    let pages = memory.grow(&mut store, 1000).unwrap();
     println!("rust: pages: {}", pages);
     // drop(memory);
 
@@ -54,9 +54,9 @@ fn func_body(my_id: &str, sorter_num: u64, merger_num: u64) -> Result<()> {
         .map_err(|e| e.to_string())?;
 
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
+    println!("start_time: {:?}", start_time);
     main.call(store, ()).map_err(|e| e.to_string())?;
-    let end_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    println!("dur_time: {:?}", end_time - start_time);
+    // let end_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
     Ok(().into())
 }
 
