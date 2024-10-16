@@ -45,7 +45,7 @@ fn func_body(my_id: &str, sorter_num: u64, merger_num: u64) -> Result<()> {
     let instance = linker.instantiate(&mut store, &module)?;
 
     let mut memory = instance.get_memory(&mut store, "memory").unwrap();
-    let pages = memory.grow(&mut store, 1000).unwrap();
+    let pages = memory.grow(&mut store, 20000).unwrap();
     println!("rust: pages: {}", pages);
     // drop(memory);
 

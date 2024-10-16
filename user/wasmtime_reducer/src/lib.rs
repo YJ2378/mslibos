@@ -5,7 +5,7 @@ use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::FaaSFuncResult as Result, args, println, libos::libos, time::{SystemTime, UNIX_EPOCH}};
+use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH}};
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;
@@ -43,7 +43,7 @@ fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
 
     let mut memory = instance.get_memory(&mut store, "memory").unwrap();
     let pages = memory.grow(&mut store, 20000).unwrap();
-    println!("rust: pages: {}", pages);
+    // println!("rust: pages: {}", pages);
 
     let main = instance
         .get_typed_func::<(), ()>(&mut store, "_start")
@@ -54,7 +54,7 @@ fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
     #[cfg(feature = "log")]
     println!("rust: wasmtime_mapper_{:?} finished!", my_id);
     let end_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    println!("end_time: {:?}", end_time);
+    // println!("end_time: {:?}", end_time);
     Ok(().into())
 }
 

@@ -49,15 +49,6 @@
           "sorter_num": "1",
           "merger_num": "1"
         }
-      },
-      {
-        "list": [
-          "spliter"
-        ],
-        "args": {
-          "sorter_num": "1",
-          "merger_num": "1"
-        }
       }
     ]
   }

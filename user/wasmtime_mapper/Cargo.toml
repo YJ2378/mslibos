@@ -11,7 +11,8 @@ crate-type = ["staticlib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["panic_def", "alloc_def"] }
-ms_hostcall = { path = "../../ms_hostcall", features = ["signal"] }
+# ms_hostcall = { path = "../../ms_hostcall", features = ["signal"] }
+ms_hostcall = { path = "../../ms_hostcall"}
 
 wasmtime_wasi_api = { path = "../../wasmtime_wasi_api" }
 

@@ -19,41 +19,6 @@ case $1 in
     ;;
   "map_reduce")
     echo "Executing map_reduce"
-    if [ -f "./user/wasmtime_mapper/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/mapper/Cargo.toml
-    fi
-    if [ -f "./user/wasmtime_reducer/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/reducer/Cargo.toml
-    fi
-    $CPP mapper_new.cpp -o mapper.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
-    wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n mapper.wasm
-    cargo build --target x86_64-unknown-none --release && cc \
-        -Wl,--gc-sections -nostdlib \
-        -Wl,--whole-archive \
-        target/x86_64-unknown-none/release/libwasmtime_mapper.a \
-        -Wl,--no-whole-archive \
-        -shared \
-        -o target/x86_64-unknown-none/release/libwasmtime_mapper.so
-    source_file="/home/wyj/alloy_stack/mslibos/user/wasmtime_mapper/target/x86_64-unknown-none/release/libwasmtime_mapper.so"
-    link_file="/home/wyj/alloy_stack/mslibos/target/release/libwasmtime_mapper.so"
-    if [ ! -L "$link_file" ]; then
-        # 如果不存在，则创建软连接
-        ln -s "$source_file" "$link_file"
-    
-    $CPP reducer_new.cpp -o reducer.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
-    wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n reducer.wasm
-    cargo build --target x86_64-unknown-none --release && cc \
-        -Wl,--gc-sections -nostdlib \
-        -Wl,--whole-archive \
-        target/x86_64-unknown-none/release/libwasmtime_reducer.a \
-        -Wl,--no-whole-archive \
-        -shared \
-        -o target/x86_64-unknown-none/release/libwasmtime_reducer.so
-    source_file="/home/wyj/alloy_stack/mslibos/user/wasmtime_reducer/target/x86_64-unknown-none/release/libwasmtime_reducer.so"
-    link_file="/home/wyj/alloy_stack/mslibos/target/release/libwasmtime_reducer.so"
-    if [ ! -L "$link_file" ]; then
-        # 如果不存在，则创建软连接
-        ln -s "$source_file" "$link_file"
 
     # 循环执行十次
     for (( i=1; i<=EXECUTIONS; i++ ))
@@ -64,18 +29,15 @@ case $1 in
         case $2 in
             "c1")
                 echo "Executing c1"
-                output=$(cargo run --release -- --metrics all --files ./isol_config/map_reduce_large_c1.json 2>&1)
-                # output=$(cargo run --release -- --preload --metrics all --files ./isol_config/map_reduce_large_c1.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_wordcount_c1.json 2>&1)
                 ;;
             "c3")
                 echo "Executing c3"
-                # output=$(cargo run --release -- --metrics all --files ./isol_config/map_reduce_large_c3.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/map_reduce_large_c3.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_wordcount_c3.json 2>&1)
                 ;;
             "c5")
                 echo "Executing c5"
-                # output=$(cargo run --release -- --metrics all --files ./isol_config/map_reduce_large_c5.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/map_reduce_large_c5.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_wordcount_c5.json 2>&1)
                 ;;
             *)
                 echo "Unknown command: $2"
@@ -99,22 +61,6 @@ case $1 in
     ;;
   "parallel_sort")
     echo "Executing parallel_sort"
-    if [ -f "./user/sorter/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/sorter/Cargo.toml
-    fi
-    if [ -f "./user/splitter/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/splitter/Cargo.toml
-    fi
-    if [ -f "./user/merger/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/merger/Cargo.toml
-    fi
-    if [ -f "./user/checker/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/checker/Cargo.toml
-    fi
-    cargo build --manifest-path ./user/sorter/Cargo.toml --release
-    cargo build --manifest-path ./user/splitter/Cargo.toml --release
-    cargo build --manifest-path ./user/merger/Cargo.toml --release
-    cargo build --manifest-path ./user/checker/Cargo.toml --release
     # 循环执行十次
     for (( i=1; i<=EXECUTIONS; i++ ))
     do
@@ -125,18 +71,15 @@ case $1 in
         case $2 in
             "c1")
                 echo "Executing c1"
-                # output=$(cargo run --release -- --metrics all --files ./isol_config/parallel_sort_c1.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/parallel_sort_c1.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_parallel_sort_c1.json 2>&1)
                 ;;
             "c3")
                 echo "Executing c3"
-                # output=$(cargo run --release -- --metrics all --files ./isol_config/parallel_sort_c3.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/parallel_sort_c3.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_parallel_sort_c3.json 2>&1)
                 ;;
             "c5")
                 echo "Executing c5"
-                # output=$(cargo run --release -- --metrics all --files ./isol_config/parallel_sort_c5.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/parallel_sort_c5.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_parallel_sort_c5.json 2>&1)
                 ;;
             *)
                 echo "Unknown command: $2"

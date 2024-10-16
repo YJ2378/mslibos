@@ -21,10 +21,6 @@
     [
       "func_a",
       "libfunc_a.so"
-    ],
-    [
-      "func_b",
-      "libfunc_b.so"
     ]
   ]
 }

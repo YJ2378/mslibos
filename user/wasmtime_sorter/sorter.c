@@ -6,8 +6,8 @@
 
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-#define MAX_ARRAY_LENGTH 160000
-#define MAX_BUFFER_SIZE 5000000
+#define MAX_ARRAY_LENGTH 20000000
+#define MAX_BUFFER_SIZE 200000000
 
 // 比较函数，用于 qsort
 int compare(const void *a, const void *b) {
@@ -55,12 +55,12 @@ int main(int argc, char* argv[]) {
     // time_t now;
     // time(&now);
     // printf("%ld read start\n", now);
-    write(1, "read start\n", sizeof("read start\n"));
+    // write(1, "read start\n", sizeof("read start\n"));
     char number[10];
     while (array[index++] = readfile(file));
     // time(&now);
     // printf("%ld read finished\n", now);
-    write(1, "read finished\n", sizeof("read finished\n"));
+    // write(1, "read finished\n", sizeof("read finished\n"));
     // while (fscanf(file, "%s", number) != EOF) {
     //     array[index] = atoi(number);
     //     // printf("array[%d]: %d\n", index, array[index]);
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     // printf("sorter_%d pivot finished!\n", id);
     // time(&now);
     // printf("%ld before alloc\n", now);
-    write(1, "alloc start\n", sizeof("alloc start\n"));
+    // write(1, "alloc start\n", sizeof("alloc start\n"));
     char slot_name[20];
     sprintf(slot_name, "sorter_%d", id);
     char *buffer;
@@ -116,11 +116,11 @@ int main(int argc, char* argv[]) {
     }
     // time(&now);
     // printf("%ld alloc finished\n", now);
-    write(1, "alloc finished\n", sizeof("alloc finished\n"));
+    // write(1, "alloc finished\n", sizeof("alloc finished\n"));
     memset(buffer, 0, bufferSize * sizeof(char));
     // time(&now);
     // printf("%ld memset finished\n", now);
-    write(1, "memset finished\n", sizeof("memset finished\n"));
+    // write(1, "memset finished\n", sizeof("memset finished\n"));
     // buffer[0] = '\0'; // 初始化为空字符串
     char *ptr = buffer;
     for (int i = 0; i < index; i++) {
@@ -132,11 +132,11 @@ int main(int argc, char* argv[]) {
     }
     *ptr++ = '\0';
     // buffer[strlen(buffer) - 1] = '\0';
-    write(1, "buffer make finished\n", sizeof("buffer make finished\n"));
+    // write(1, "buffer make finished\n", sizeof("buffer make finished\n"));
     buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
-    write(1, "buffer register finished\n", sizeof("buffer register finished\n"));
+    // write(1, "buffer register finished\n", sizeof("buffer register finished\n"));
     free(buffer);
     // printf("sorter_%d all finished!\n", id);
-    write(1, "all finished\n", sizeof("all finished\n"));
+    // write(1, "all finished\n", sizeof("all finished\n"));
     return 0;
 }

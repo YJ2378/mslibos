@@ -37,5 +37,5 @@ def gen_parallel_sort(file_num: int, total_size: int):
 
 
 if __name__ == "__main__":
-    gen_word_count(1, 300 * 1024 * 1024)
-    # gen_parallel_sort(1, 1 * 1024 * 1024)
+    # gen_word_count(1, 10 * 1024 * 1024)
+    gen_parallel_sort(1, 1 * 1024 * 1024)

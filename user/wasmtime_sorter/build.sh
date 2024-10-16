@@ -11,6 +11,16 @@ cargo build --target x86_64-unknown-none --release && cc \
   -o target/x86_64-unknown-none/release/libwasmtime_sorter.so
 
 
-# ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_sorter/target/x86_64-unknown-none/debug/libwasmtime_sorter.so /home/wyj/alloy_stack/mslibos/target/debug/libwasmtime_sorter.so
 ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_sorter/target/x86_64-unknown-none/release/libwasmtime_sorter.so /home/wyj/alloy_stack/mslibos/target/release/libwasmtime_sorter.so
 
+
+
+# cargo build --target x86_64-unknown-none && cc \
+#   -Wl,--gc-sections -nostdlib \
+#   -Wl,--whole-archive \
+#   target/x86_64-unknown-none/debug/libwasmtime_sorter.a \
+#   -Wl,--no-whole-archive \
+#   -shared \
+#   -o target/x86_64-unknown-none/debug/libwasmtime_sorter.so
+
+# ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_sorter/target/x86_64-unknown-none/debug/libwasmtime_sorter.so /home/wyj/alloy_stack/mslibos/target/debug/libwasmtime_sorter.so
