@@ -23,8 +23,8 @@
     ],
     "apps": [
         [
-            "file_reader",
-            "libfile_reader.so"
+            "array_sum0",
+            "libarray_sum.so"
         ],
         [
             "array_sum1",
@@ -61,25 +61,14 @@
         [
             "array_sum9",
             "libarray_sum.so"
-        ],
-        [
-            "array_sum10",
-            "libarray_sum.so"
         ]
     ],
-    "fs_image": "fs_images/fatfs.img",
     "groups": [
         {
             "list": [
-                {
-                    "name": "file_reader",
-                    "args": {
-                        "slot_name": "part-0-0",
-                        "input_file": "fake_data_0.txt"
-                    }
-                }
+                "array_sum0"
             ],
-            "args": {}
+            "args": {"array_num": "0"}
         },
         {
             "list": [
@@ -134,12 +123,6 @@
                 "array_sum9"
             ],
             "args": {"array_num": "9"}
-        },
-        {
-            "list": [
-                "array_sum10"
-            ],
-            "args": {"array_num": "10"}
         }
     ]
 }

@@ -23,6 +23,21 @@
         "vector": "cpp",
         "iosfwd": "cpp",
         "filesystem": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "ostream": "cpp",
+        "__locale": "cpp",
+        "__string": "cpp",
+        "memory": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "__threading_support": "cpp",
+        "type_traits": "cpp",
+        "*.tcc": "cpp",
+        "__tuple": "cpp",
+        "algorithm": "cpp",
+        "fstream": "cpp",
+        "locale": "cpp",
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }

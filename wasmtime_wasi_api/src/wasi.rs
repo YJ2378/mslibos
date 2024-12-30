@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 extern crate alloc;
 
 use core::mem::forget;
@@ -7,8 +9,9 @@ use ms_std::println;
 #[cfg(feature = "log")]
 use alloc::format;
 
-use alloc::{borrow::ToOwned, string::{String, ToString}, vec::Vec};
+use alloc::{borrow::ToOwned, string::{String, ToString}, sync::Arc, vec::Vec};
 use hashbrown::HashMap;
+use sjlj::{longjmp, JumpBuf};
 use spin::{Mutex, MutexGuard};
 use wasmtime::Caller;
 
@@ -28,10 +31,7 @@ lazy_static::lazy_static! {
 fn get_hashmap_wasi_state_mut() -> MutexGuard<'static, HashMap<String, WasiState>> {
     WASI_STATE.lock()
 }
-fn get_wasi_state<'a>(
-    id: &str,
-    map: &'a MutexGuard<'static, HashMap<String, WasiState>>,
-) -> &'a WasiState {
+fn get_wasi_state<'a>(id: &str, map: &'a MutexGuard<'static, HashMap<String, WasiState>>) -> &'a WasiState {
     let wasi_state = map.get(id).unwrap();
     if wasi_state.args.len() == 0 {
         panic!("WASI_STATE uninit")
@@ -61,11 +61,16 @@ fn set_fd2path(fd: u32, path: String) {
     map.insert(fd, path);
 }
 
+lazy_static::lazy_static! {
+    pub static ref JMP_BUF_MAP: Mutex<HashMap<String, Arc<JumpBuf>>> = Mutex::new( HashMap::new() );
+}
+
 pub fn args_get(mut caller: Caller<'_, LibosCtx>, argv: i32, argv_buf: i32) -> i32 {
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into args_get");
         println!("args: argv: {:?}, argv_buf: {:?}", argv, argv_buf);
+        println!("[Time] args_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     // argv是每个arg在argv_buf中的起始地址的数组的起始地址
@@ -112,6 +117,7 @@ pub fn args_sizes_get(mut caller: Caller<'_, LibosCtx>, argc: i32, argv_buf_size
     {
         println!("[Debug] Invoke into args_sizes_get");
         println!("args: argc: {:?}, argv_buf_size: {:?}", argc, argv_buf_size);
+        println!("[Time] args_sizes_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let caller_id = &caller.data().id;
@@ -139,6 +145,7 @@ pub fn clock_res_get(mut caller: Caller<'_, LibosCtx>, clock_id: i32, resolution
     {
         println!("[Debug] Invoke into clock_res_get");
         println!("args: clock_id: {:?}, resolution: {:?}", clock_id, resolution);
+        println!("[Time] clock_res_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -152,6 +159,7 @@ pub fn clock_time_get(mut caller: Caller<'_, LibosCtx>, clock_id: i32, precision
             "args: clock_id: {:?}, precision: {:?}, time: {:?}",
             clock_id, precision, time
         );
+        println!("[Time] clock_time_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -166,6 +174,7 @@ pub fn environ_get(mut caller: Caller<'_, LibosCtx>, environ: i32, environ_buf: 
     {
         println!("[Debug] Invoke into environ_get");
         println!("args: environ: {:?}, environ_buf: {:?}", environ, environ_buf);
+        println!("[Time] environ_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -179,6 +188,7 @@ pub fn environ_sizes_get(mut caller: Caller<'_, LibosCtx>, environ_count: i32, e
             "args: environ_count: {:?}, environ_buf_size: {:?}",
             environ_count, environ_buf_size
         );
+        println!("[Time] environ_sizes_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let count = 0i32;
@@ -195,6 +205,7 @@ pub fn fd_advise(mut caller: Caller<'_, LibosCtx>, fd: i32, offset: i64, len: i6
     {
         println!("[Debug] Invoke into fd_advise");
         println!("args: fd: {:?}, offset: {:?}, len: {:?}, advice: {:?}", fd, offset, len, advice);
+        println!("[Time] fd_advise: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     
     Errno::Success as i32
@@ -205,6 +216,7 @@ pub fn fd_close(mut caller: Caller<'_, LibosCtx>, fd: i32) -> i32 {
     {
         println!("[Debug] Invoke into fd_close");
         println!("args: fd: {:?}", fd);
+        println!("[Time] fd_close: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     libos!(close(fd as u32)).unwrap();
@@ -216,6 +228,7 @@ pub fn fd_datasync(mut caller: Caller<'_, LibosCtx>, fd: i32) -> i32 {
     {
         println!("[Debug] Invoke into fd_datasync");
         println!("args: fd: {:?}", fd);
+        println!("[Time] fd_datasync: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     
     Errno::Success as i32
@@ -226,6 +239,7 @@ pub fn fd_fdstat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, retptr: i32) -> 
     {
         println!("[Debug] Invoke into fd_fdstat_get");
         println!("args: fd: {:?}, retptr: {:?}", fd, retptr);
+        println!("[Time] fd_fdstat_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -297,6 +311,7 @@ pub fn fd_fdstat_set_flags(mut caller: Caller<'_, LibosCtx>, fd: i32, offset: i3
     {
         println!("[Debug] Invoke into fd_fdstat_set_flags");
         println!("args: fd: {:?}, flag: {:?}", fd as u32, offset as u16);
+        println!("[Time] fd_fdstat_set_flags: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -307,6 +322,7 @@ pub fn fd_filestat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32) -> i
     {
         println!("[Debug] Invoke into fd_filestat_get");
         println!("args: fd: {:?}, buf: {:?}", fd, buf);
+        println!("[Time] fd_filestat_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -317,6 +333,7 @@ pub fn fd_filestat_set_size(mut caller: Caller<'_, LibosCtx>, fd: i32, st_size: 
     {
         println!("[Debug] Invoke into fd_filestat_set_size");
         println!("args: fd: {:?}, st_size: {:?}", fd, st_size);
+        println!("[Time] fd_filestat_set_size: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -327,6 +344,7 @@ pub fn fd_filestat_set_times(mut caller: Caller<'_, LibosCtx>, fd: i32, st_atim:
     {
         println!("[Debug] Invoke into fd_filestat_set_times");
         println!("args: fd: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}", fd, st_atim, st_mtim, fst_flags);
+        println!("[Time] fd_filestat_set_times: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     
     Errno::Success as i32
@@ -340,6 +358,7 @@ pub fn fd_pread(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs: i32, iovs_len: 
             "args: fd: {:?}, iovs: {:?}, iovs_len: {:?}, offset: {:?}, nread: {:?}",
             fd, iovs, iovs_len, offset, nread
         );
+        println!("[Time] fd_pread: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -353,6 +372,7 @@ pub fn fd_pwrite(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs: i32, iovs_len:
             "args: fd: {:?}, iovs: {:?}, iovs_len: {:?}, offset: {:?}, nwritten: {:?}",
             fd , iovs , iovs_len , offset , nwritten 
         );
+        println!("[Time] fd_pwrite: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -363,6 +383,7 @@ pub fn fd_prestat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, retptr: i32) ->
     {
         println!("[Debug] Invoke into fd_prestat_get");
         println!("args: fd: {:?}, retptr: {:?}", fd, retptr);
+        println!("[Time] fd_prestat_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -390,7 +411,7 @@ pub fn fd_prestat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, retptr: i32) ->
         // Todo: libos需要维护一个表，从表中找fd，找不到就返回Badf
         _ => {
             #[cfg(feature = "log")]
-            println!("[WASI ERR] Erron in fd_prestat_get: Badf");
+            println!("[WASI ERR] Errno in fd_prestat_get: Badf");
             Errno::Badf as i32
         }
     }
@@ -404,6 +425,7 @@ pub fn fd_prestat_dir_name(mut caller: Caller<'_, LibosCtx>, fd: i32, path_addr:
             "args: fd: {:?}, path_addr: {:?}, path_len: {:?}",
             fd, path_addr, path_len
         );
+        println!("[Time] fd_prestat_dir_name: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -415,7 +437,7 @@ pub fn fd_prestat_dir_name(mut caller: Caller<'_, LibosCtx>, fd: i32, path_addr:
         Errno::Success as i32
     } else {
         #[cfg(feature = "log")]
-        println!("[WASI ERR] Erron in fd_prestat_dir_name: Overflow");
+        println!("[WASI ERR] Errno in fd_prestat_dir_name: Overflow");
         Errno::Overflow as i32
     }
 }
@@ -428,6 +450,7 @@ pub fn fd_read(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs_ptr: i32, iovs_le
             "args: fd: {:?}, iovs_ptr: {:?}, iovs_len: {:?}, retptr: {:?}",
             fd, iovs_ptr, iovs_len, retptr
         );
+        println!("[Time] fd_read: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -435,13 +458,16 @@ pub fn fd_read(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs_ptr: i32, iovs_le
 
     for i in 0..iovs_len {
         let offset: usize = iovs_ptr as usize + i as usize * core::mem::size_of::<WasiCiovec>();
-        let mut iovs = [0; core::mem::size_of::<WasiCiovec>()];
-        memory.read(&caller, offset, &mut iovs).unwrap();
+        let iovs = memory.data(&caller)
+                                    .get(offset..)
+                                    .and_then(|s| s.get(..core::mem::size_of::<WasiCiovec>() as usize))
+                                    .unwrap();
         let iovs: &WasiCiovec = unsafe { &*(iovs.as_ptr() as *const WasiCiovec) };
-        let mut buf: Vec<u8> = Vec::with_capacity(iovs.buf_len as usize);
-        buf.resize(iovs.buf_len as usize, 0);
+        let mut buf = memory.data_mut(&mut caller)
+                                    .get_mut(iovs.buf as usize..)
+                                    .and_then(|s| s.get_mut(..iovs.buf_len as usize))
+                                    .unwrap();
         read_size += libos!(read(fd as u32, &mut buf)).unwrap();
-        memory.write(&mut caller, iovs.buf as usize, &buf).unwrap();
     }
 
     #[cfg(feature = "log")]
@@ -458,6 +484,7 @@ pub fn fd_readdir(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32, buf_len: 
             "args: fd: {:?}, buf: {:?}, buf_len: {:?}, cookie: {:?}, bufused: {:?}",
             fd, buf, buf_len, cookie, bufused
         );
+        println!("[Time] fd_readdir start: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -490,10 +517,13 @@ pub fn fd_readdir(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32, buf_len: 
             d_ino: match item.entry_name.as_str() {
                 "." | ".." => 0, // fake ino
                 _ => {
-                    let item_fd: u32 = libos!(open(&item.dir_path, OpenFlags::empty(), OpenMode::RD)).unwrap();
-                    let item_stat = libos!(stat(item_fd)).unwrap();
-                    libos!(close(item_fd)).unwrap();
-                    item_stat.st_ino
+                    // let item_fd: u32 = libos!(open(&item.dir_path, OpenFlags::empty(), OpenMode::RD)).unwrap();
+                    // let item_stat = libos!(stat(item_fd)).unwrap();
+                    // libos!(close(item_fd)).unwrap();
+                    // item_stat.st_ino
+
+                    // fake implement
+                    0
                 }
             },
             d_namelen: item.entry_name.len() as u32,
@@ -522,7 +552,7 @@ pub fn fd_readdir(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32, buf_len: 
             
             memory.write(&mut caller, cur_buf as usize, part_buf).unwrap();
             memory.write(&mut caller, bufused as usize, &buf_len.to_ne_bytes()).unwrap();
-            // forget(entries);
+            forget(entries);
             return Errno::Success as i32
         }
 
@@ -535,7 +565,7 @@ pub fn fd_readdir(mut caller: Caller<'_, LibosCtx>, fd: i32, buf: i32, buf_len: 
         bufused_len += item.entry_name.len() as u32;
     }
     memory.write(&mut caller, bufused as usize, &bufused_len.to_ne_bytes()).unwrap();
-    // forget(entries);
+    forget(entries);
     Errno::Success as i32
 }
 
@@ -547,6 +577,7 @@ pub fn fd_seek(mut caller: Caller<'_, LibosCtx>, fd: i32, offset: i64, whence: i
             "args: fd: {:?}, offset: {:?}, whence: {:?}, pos: {:?}",
             fd, offset, whence, pos
         );
+        println!("[Time] fd_seek: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     // TO BE FIX FOR PY HELLO
@@ -572,6 +603,7 @@ pub fn fd_sync(mut caller: Caller<'_, LibosCtx>, fd: i32) -> i32 {
     {
         println!("[Debug] Invoke into fd_sync");
         println!("args: fd: {:?}", fd);
+        println!("[Time] fd_sync: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     
     Errno::Success as i32
@@ -582,6 +614,7 @@ pub fn fd_tell(mut caller: Caller<'_, LibosCtx>, fd: i32, offset: i32) -> i32 {
     {
         println!("[Debug] Invoke into fd_tell");
         println!("args: fd: {:?}, offset: {:?}", fd, offset);
+        println!("[Time] fd_tell: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -595,6 +628,7 @@ pub fn fd_write(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs_ptr: i32, iovs_l
             "args: fd: {:?}, iovs_ptr: {:?}, iovs_len: {:?}, retptr: {:?}",
             fd, iovs_ptr, iovs_len, retptr
         );
+        println!("[Time] fd_write: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -602,12 +636,15 @@ pub fn fd_write(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs_ptr: i32, iovs_l
 
     for i in 0..iovs_len {
         let offset: usize = iovs_ptr as usize + i as usize * core::mem::size_of::<WasiCiovec>();
-        let mut iovs = [0; core::mem::size_of::<WasiCiovec>()];
-        memory.read(&caller, offset, &mut iovs).unwrap();
+        let iovs = memory.data(&caller)
+                                    .get(offset..)
+                                    .and_then(|s| s.get(..core::mem::size_of::<WasiCiovec>() as usize))
+                                    .unwrap();
         let iovs: &WasiCiovec = unsafe { &*(iovs.as_ptr() as *const WasiCiovec) };
-        let mut buf: Vec<u8> = Vec::with_capacity(iovs.buf_len as usize);
-        buf.resize(iovs.buf_len as usize, 0);
-        memory.read(&caller, iovs.buf as usize, &mut buf).unwrap();
+        let buf = memory.data(&caller)
+                                    .get(iovs.buf as usize..)
+                                    .and_then(|s| s.get(..iovs.buf_len as usize))
+                                    .unwrap();
         write_size += libos!(write(fd as u32, &buf)).unwrap();
     }
 
@@ -625,6 +662,7 @@ pub fn path_create_directory(mut caller: Caller<'_, LibosCtx>, fd: i32, path: i3
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
             fd, path, path_len
         );
+        println!("[Time] path_create_directory: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -638,6 +676,7 @@ pub fn path_filestat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, flags: i32, 
             "args: fd: {:?}, flags: {:?}, path_ptr: {:?}, path_len: {:?}, buf: {:?}",
             fd, flags, path_ptr, path_len, buf
         );
+        println!("[Time] path_filestat_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -653,11 +692,11 @@ pub fn path_filestat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, flags: i32, 
     let path_fd = if let Err(_e) = path_fd {
         #[cfg(feature = "log")]
         {
-            println!("[WASI ERR] Erron in path_filestat_get: Noent");
+            println!("[WASI ERR] Errno in path_filestat_get: Noent");
             println!("[WASI ERR] path error msg: {:?}", _e);
         }
         
-        // forget(_e);
+        forget(_e);
         return Errno::Noent as i32;
     } else {
         path_fd.unwrap() as u32
@@ -698,6 +737,7 @@ pub fn path_filestat_set_times(mut caller: Caller<'_, LibosCtx>, fd: i32, flags:
             "args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}",
             fd, flags, path, path_len, st_atim, st_mtim, fst_flags
         );
+        println!("[Time] path_filestat_set_times: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -708,6 +748,7 @@ pub fn path_link(mut caller: Caller<'_, LibosCtx>, old_fd: i32, old_flags: i32, 
     {
         println!("[Debug] Invoke into path_link");
         println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", old_fd, old_flags, old_path, old_path_len, new_fd, new_path, new_path_len);
+        println!("[Time] path_link: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -718,6 +759,7 @@ pub fn path_open(mut caller: Caller<'_, LibosCtx>, fd: i32, dirflags: i32, path_
     {
         println!("[Debug] Invoke into path_open");
         println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", fd as u32, dirflags as u32, path_addr as u32, path_len as u32, oflags as u16, format!("{:064b}", fs_rights_base as u64), format!("{:064b}", fs_rights_inheriting as u64), fdflags as u16, retptr as u32);
+        println!("[Time] path_open: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
 
@@ -750,11 +792,11 @@ pub fn path_open(mut caller: Caller<'_, LibosCtx>, fd: i32, dirflags: i32, path_
     let path_fd: FdtabResult<Fd> = libos!(open(&path, flags, mode));
     let path_fd = if let Err(_e) = path_fd {
         #[cfg(feature = "log")] {
-            println!("[WASI ERR] Erron in path_open: Noent");
+            println!("[WASI ERR] Errno in path_open: Noent");
             println!("[WASI ERR] path error msg: {:?}", _e);
         }
 
-        // forget(_e);
+        forget(_e);
         return Errno::Noent as i32;
     } else {
         path_fd.unwrap() as u32
@@ -773,6 +815,7 @@ pub fn path_readlink(mut caller: Caller<'_, LibosCtx>, dir_fd: i32, path: i32, p
     {
         println!("[Debug] Invoke into path_readlink");
         println!("args: dir_fd: {:?}, path: {:?}, path_len: {:?}, buf: {:?}, buf_len: {:?}, buf_used: {:?}", dir_fd, path, path_len, buf, buf_len, buf_used);
+        println!("[Time] path_readlink: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
     
     Errno::Success as i32
@@ -786,6 +829,7 @@ pub fn path_remove_directory(mut caller: Caller<'_, LibosCtx>, fd: i32, path: i3
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
             fd, path, path_len
         );
+        println!("[Time] path_remove_directory: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -796,6 +840,7 @@ pub fn path_rename(mut caller: Caller<'_, LibosCtx>, old_fd: i32, old_path: i32,
     {
         println!("[Debug] Invoke into path_rename");
         println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", old_fd, old_path, old_path_len, new_fd, new_path, new_path_len);
+        println!("[Time] path_rename: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -809,6 +854,7 @@ pub fn path_symlink(mut caller: Caller<'_, LibosCtx>, old_path: i32, old_path_le
             "args: old_path: {:?}, old_path_len: {:?}, fd: {:?}, new_path: {:?}, new_path_len: {:?}",
             old_path, old_path_len, fd, new_path, new_path_len
         );
+        println!("[Time] path_symlink: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -822,6 +868,7 @@ pub fn path_unlink_file(mut caller: Caller<'_, LibosCtx>, fd: i32, path: i32, pa
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
             fd, path, path_len
         );
+        println!("[Time] path_unlink_file: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -835,6 +882,7 @@ pub fn poll_oneoff(mut caller: Caller<'_, LibosCtx>, in_: i32, out_: i32, nsubsc
             "args: in_: {:?}, out_: {:?}, nsubscriptions: {:?}, nevents: {:?}",
             in_, out_, nsubscriptions, nevents
         );
+        println!("[Time] poll_oneoff: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -846,8 +894,19 @@ pub fn proc_exit(mut caller: Caller<'_, LibosCtx>, code: i32) {
         println!("[Debug] Invoke into proc_exit");
         // An exit code of 0 indicates successful termination of the program.
         println!("args: code: {:?}", code);
+        println!("[Time] proc_exit: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
-    // nothing to do
+    
+    match code {
+        0 => {
+            let caller_id = &caller.data().id;
+            let jmpbuf = {
+                Arc::clone(JMP_BUF_MAP.lock().get(caller_id).unwrap())
+            };
+            unsafe { longjmp(jmpbuf.as_ref(), 1); };
+        },
+        _ => { panic!("[ERR] proc_exit got error code {:?}", code); }
+    }
 }
 
 pub fn random_get(mut caller: Caller<'_, LibosCtx>, buf: i32, buf_len: i32) -> i32 {
@@ -855,6 +914,7 @@ pub fn random_get(mut caller: Caller<'_, LibosCtx>, buf: i32, buf_len: i32) -> i
     {
         println!("[Debug] Invoke into random_get");
         println!("args: buf: {:?}, buf_len: {:?}", buf, buf_len);
+        println!("[Time] random_get: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
@@ -884,6 +944,7 @@ pub fn sched_yield(mut caller: Caller<'_, LibosCtx>) -> i32 {
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into sched_yield");
+        println!("[Time] sched_yield: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -897,6 +958,7 @@ pub fn sock_accept(mut caller: Caller<'_, LibosCtx>, sock: i32, fd_flags: i32, r
             "args: sock: {:?}, fd_flags: {:?}, ro_fd: {:?}",
             sock, fd_flags, ro_fd
         );
+        println!("[Time] sock_accept: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -907,6 +969,7 @@ pub fn sock_recv(mut caller: Caller<'_, LibosCtx>, sock: i32, ri_data: i32, ri_d
     {
         println!("[Debug] Invoke into sock_recv");
         println!("args: sock: {:?}, ri_data: {:?}, ri_data_len: {:?}, ri_flags: {:?}, ro_data_len: {:?}, ro_flags: {:?}", sock, ri_data, ri_data_len, ri_flags, ro_data_len, ro_flags);
+        println!("[Time] sock_recv: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -920,6 +983,7 @@ pub fn sock_send(mut caller: Caller<'_, LibosCtx>, sock: i32, si_data: i32, si_d
             "args: sock: {:?}, si_data: {:?}, si_data_len: {:?}, si_flags: {:?}, ret_data_len: {:?}",
             sock, si_data, si_data_len, si_flags, ret_data_len
         );
+        println!("[Time] sock_send: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32
@@ -930,6 +994,7 @@ pub fn sock_shutdown(mut caller: Caller<'_, LibosCtx>, sock: i32, how: i32) -> i
     {
         println!("[Debug] Invoke into sock_shutdown");
         println!("args: sock: {:?}, how: {:?}", sock, how);
+        println!("[Time] sock_shutdown: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     }
 
     Errno::Success as i32

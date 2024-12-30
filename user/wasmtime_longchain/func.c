@@ -11,20 +11,21 @@ int main(int argc, char* argv[]) {
     int func_num = atoi(argv[2]);
     printf("func.c recieve: id: %d, func_num: %d\n", id, func_num);
 
-    char slot_name[20];
-    int bufferSize = 2;
+    char slot_name[20] = "buffer";
+    int bufferSize = 1024 * 1024 * 256;
     char *buffer = (char *)malloc(bufferSize * sizeof(char));
-    
     if (func_num == 0) {
-        sprintf(slot_name, "buffer_%d_%d", func_num, id);
-        buffer[0] = '0';
-        buffer[1] = '\0';
+        // sprintf(slot_name, "buffer_%d_%d", func_num, id);
+        memset(buffer, 0, bufferSize * sizeof(char));
         buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
-    } else {
-        sprintf(slot_name, "buffer_%d_%d", func_num-1, id);
+    } else if (func_num == 14) {
         access_buffer(slot_name, strlen(slot_name), buffer, bufferSize);
-        sprintf(slot_name, "buffer_%d_%d", func_num, id);
-        buffer[0] += 1;
+    }
+    else {
+        // sprintf(slot_name, "buffer_%d_%d", func_num-1, id);
+        access_buffer(slot_name, strlen(slot_name), buffer, bufferSize);
+        // sprintf(slot_name, "buffer_%d_%d", func_num, id);
+        // buffer[0] += 1;
         buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
     }
     free(buffer);

@@ -61,10 +61,11 @@ fn func_body(my_id: &str, func_num: u64) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    main.call(store, ()).map_err(|e| e.to_string())?;
-
+    // main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
     
-    if func_num == 9 {
+    if func_num == 14 {
         let data = DataBuffer::<MyData>::from_buffer_slot("Conference".to_owned());
         if let Some(buffer) = data {
             let dur = buffer.current_time.elapsed();

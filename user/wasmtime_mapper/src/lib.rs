@@ -56,7 +56,9 @@ fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
     
     // let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
     // println!("start_time: {:?}", start_time);
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    // main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_mapper_{:?} finished!", my_id);

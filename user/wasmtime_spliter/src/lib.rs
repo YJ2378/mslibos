@@ -51,8 +51,8 @@ fn func_body(my_id: &str, sorter_num: u64, merger_num: u64) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    main.call(store, ()).map_err(|e| e.to_string())?;
-
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
     Ok(().into())
 }
 

@@ -1,6 +1,7 @@
 #![no_std]
 
 extern crate alloc;
+use core::mem::forget;
 use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
 
@@ -49,7 +50,9 @@ fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    // main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_mapper_{:?} finished!", my_id);

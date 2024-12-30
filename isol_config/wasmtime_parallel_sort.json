@@ -39,11 +39,20 @@
         "libwasmtime_checker.so"
       ]
     ],
-    "fs_image": "fs_images/fatfs.img",
+    "fs_image": "fs_images/new_image.img",
     "groups": [
       {
         "list": [
           "sorter"
+        ],
+        "args": {
+          "sorter_num": "1",
+          "merger_num": "1"
+        }
+      },
+      {
+        "list": [
+          "spliter"
         ],
         "args": {
           "sorter_num": "1",

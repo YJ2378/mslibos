@@ -55,13 +55,16 @@ fn func_body(my_id: &str, sorter_num: u64, merger_num: u64) -> Result<()> {
 
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
     println!("start_time: {:?}", start_time);
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
     // let end_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
     Ok(().into())
 }
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
+    println!("start_time: {:?}", start_time);
     let my_id = args::get("id").unwrap();
     let sorter_num: u64 = args::get("sorter_num")
         .expect("missing arg sorter_num")

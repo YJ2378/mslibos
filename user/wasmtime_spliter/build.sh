@@ -1,6 +1,8 @@
-$CC spliter.c -o spliter.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
-
+# $CPP spliter.cpp -o spliter.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
+$CPP spliter_ori.cpp -o spliter.wasm # -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
+# $CC spliter.c -o spliter.wasm
 wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n spliter.wasm
+# wasmtime compile --target x86_64-unknown-none -W simd=y,threads=n,tail-call=n spliter.wasm
 
 cargo build --target x86_64-unknown-none --release && cc \
   -Wl,--gc-sections -nostdlib \

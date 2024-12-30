@@ -1,6 +1,8 @@
-$CC sorter.c -o sorter.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
-
+# $CPP sorter.cpp -o sorter.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
+$CPP sorter_ori.cpp -o sorter.wasm -fno-exceptions -fno-rtti -ffast-math -fomit-frame-pointer -Ofast  #-funroll-loops
+# $CC sorter.c -o sorter.wasm
 wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n sorter.wasm
+# wasmtime compile --target x86_64-unknown-none -W simd=y,threads=n,tail-call=n sorter.wasm
 
 cargo build --target x86_64-unknown-none --release && cc \
   -Wl,--gc-sections -nostdlib \

@@ -11,7 +11,6 @@ cargo build --manifest-path ./user/func_a/Cargo.toml --release
 
 # 初始化变量来累加 total_dur 的值
 total_dur_sum=0
-total_size=0
 
 # 循环执行十次
 for (( i=1; i<=EXECUTIONS; i++ ))
@@ -20,21 +19,17 @@ do
 
     # 运行项目并提取 "total_dur(ms)" 的值
     # output=$(cargo run --release -- --preload --metrics all --files ./isol_config/pass_complex_args.json 2>&1)
-    output=$(cargo run --release -- --files ./isol_config/pass_complex_args.json 2>&1)
+    output=$(cargo run --release -- --preload --files ./isol_config/pass_complex_args.json 2>&1)
     
-    total_dur=$(echo "$output" | grep 'total_dur=' | cut -d'=' -f2)
-    total_size=$(echo "$output" | grep 'total_size=' | cut -d'=' -f2)
+    total_dur=$(echo "$output" | grep 'opt_dur=' | cut -d'=' -f2)
     # 累加 total_dur 的值
     total_dur_sum=$(echo "$total_dur_sum + $total_dur" | bc)
 
     # 打印结果
-    echo "$total_dur $total_size"
+    echo "$total_dur"
 done
 
 
 # 计算平均值
-average_total_dur=$(echo "scale=3; $total_dur_sum / $EXECUTIONS / 1000" | bc)
+average_total_dur=$(echo "scale=6; $total_dur_sum / $EXECUTIONS / 1000" | bc)
 echo "Average Total Dur (ms): $average_total_dur"
-# 计算rate
-average_rate=$(echo "scale=3; $total_size * 1000 * 1000 / 1024 / 1024 / average_total_dur" | bc)
-echo "Average Rate (MB/s): $average_rate"

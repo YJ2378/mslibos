@@ -1,0 +1,112 @@
+#include <faasm/faasm.h>
+#include <faasm/core.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <sstream>
+#include <stdlib.h>
+#include <cctype>
+#include <fstream>
+#include <unordered_map>
+using namespace std;
+
+#define MAX_SLOT_NUM 10
+
+long long get_time() {
+    timeval tv{};
+    gettimeofday(&tv, nullptr);
+    // printf("%lld.%06lld\n", (long long)tv.tv_sec, tv.tv_usec);
+    return (long long)tv.tv_sec * 1000000 + tv.tv_usec;
+}
+
+int mapper() {
+    auto compute_start = get_time();
+    auto file_time = 0;
+    long long st, ed;
+    int* argv = new int[2];
+    faasmGetInput(BYTES(argv), sizeof(int) * 2);
+    int id = argv[0];
+    int reducer_num = argv[1];
+    cout << "mapper_" << id << " start!" << endl;
+    string input_file = "faasm://fake_data_" + to_string(id) + ".txt";
+
+    unordered_map<string, int> word_map;
+    string word;
+    st = get_time();
+    ifstream file(input_file);
+    string content((std::istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+    file.close();
+    ed = get_time();
+    file_time += ed - st;
+
+    transform(content.begin(), content.end(), content.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    // 使用 istringstream 分割单词
+    istringstream sfile(content);
+    while (sfile >> word) {
+        ++word_map[word];
+    }
+
+    st = get_time();
+
+    string buffer[MAX_SLOT_NUM];
+    string slot_name[MAX_SLOT_NUM];
+
+    for (auto& pair : word_map) {
+        int partition_index = hash<string>{}(pair.first) % reducer_num;
+        slot_name[partition_index] = "buffer_" + to_string(partition_index) + "_" + to_string(id);
+        buffer[partition_index].append(pair.first + " " + to_string(pair.second) + "\n");
+    }
+
+    int word_index = word_map.size();
+    cout << "mapper_" << id << " solved " << word_index << " words!" << endl;
+
+    st = get_time();
+    for (int i = 0; i < reducer_num; i++) {
+        faasmWriteState(slot_name[i].c_str(), (uint8_t*)buffer[i].c_str(), buffer[i].size());
+    }
+    auto transfer_time = get_time() - st;
+    cout << "mapper_" << id << " write finished!" << endl;
+    cout << "mapper_" << id << " file time: " << file_time << " transfer time: " << transfer_time << " compute time: " << get_time() - compute_start - file_time - transfer_time << endl;
+    
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    int mapper_num = 3;
+    int reducer_num = 3;
+    // Stage 1: Map
+    vector<int> call_id;
+    for (int i = 0; i < mapper_num; i++) {
+        int* input = new int[2];
+        input[0] = i;
+        input[1] = reducer_num;
+        call_id.push_back(faasmChain(mapper, BYTES(input), sizeof(int) * 2));
+    }
+    for (int i = 0; i < mapper_num; i++) {
+        faasmAwaitCall(call_id[i]);
+    }
+    printf("Map finished!\n");
+    // Stage 2: Reduce
+    vector<int> call_id2;
+    for (int i = 0; i < reducer_num; i++) {
+        int* input = new int[2];
+        input[0] = i;
+        input[1] = mapper_num;
+        call_id2.push_back(faasmChainNamed("stderr", BYTES(input), sizeof(int) * 2));
+    }
+    for (int i = 0; i < reducer_num; i++) {
+        faasmAwaitCall(call_id2[i]);
+    }
+    printf("Reduce finished! %lld\n", get_time());
+    get_time();
+    return 0;
+}
+
+/*
+inv func.compile demo sysconf && inv func.compile demo stderr && inv func.upload demo sysconf && inv func.upload demo stderr && inv func.flush
+inv func.invoke demo sysconf 
+*/

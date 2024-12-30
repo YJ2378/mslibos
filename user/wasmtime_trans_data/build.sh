@@ -1,4 +1,5 @@
 $CPP trans_data.cpp -o trans_data.wasm -fno-exceptions -fno-rtti -ffast-math -funroll-loops -fomit-frame-pointer -Ofast
+# $CPP trans_data.cpp -o trans_data.wasm
 
 wasmtime compile --target x86_64-unknown-none -W threads=n,tail-call=n trans_data.wasm
 

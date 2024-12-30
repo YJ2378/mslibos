@@ -31,7 +31,7 @@
         "libwasmtime_reducer.so"
       ]
     ],
-    "fs_image": "fs_images/fatfs_large_sort.img",
+    "fs_image": "fs_images/new_image.img",
     "groups": [
       {
         "list": [

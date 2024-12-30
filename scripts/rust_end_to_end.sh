@@ -16,13 +16,9 @@ fi
 case $1 in
   "long_chain")
     echo "Executing long_chain"
-    if [ -f "./user/file_reader/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/file_reader/Cargo.toml
-    fi
     if [ -f "./user/array_sum/Cargo.toml" ]; then
         cargo clean --manifest-path ./user/array_sum/Cargo.toml
     fi
-    cargo build --manifest-path ./user/file_reader/Cargo.toml --release
     cargo build --manifest-path ./user/array_sum/Cargo.toml --release
     
     # 循环执行十次
@@ -32,20 +28,20 @@ case $1 in
 
         # 运行项目并提取 "total_dur(ms)" 的值
         case $2 in
-            "c1")
+            "n5")
                 echo "Executing c1"
                 # output=$(cargo run --release -- --metrics all --files ./isol_config/long_chain_c1.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/long_chain_c1.json 2>&1)
+                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/long_chain_n5.json 2>&1)
                 ;;
-            "c3")
+            "n10")
                 echo "Executing c3"
                 # output=$(cargo run --release -- --metrics all --files ./isol_config/long_chain_c3.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/long_chain_c3.json 2>&1)
+                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/long_chain_n10.json 2>&1)
                 ;;
-            "c5")
+            "n15")
                 echo "Executing c5"
                 # output=$(cargo run --release -- --metrics all --files ./isol_config/long_chain_c5.json 2>&1)
-                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/long_chain_c5.json 2>&1)
+                output=$(cargo run --release -- --preload --metrics all --files ./isol_config/long_chain_n15.json 2>&1)
                 ;;
             *)
                 echo "Unknown command: $2"
@@ -69,18 +65,14 @@ case $1 in
     ;;
   "map_reduce")
     echo "Executing map_reduce"
-    if [ -f "./user/file_reader/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/file_reader/Cargo.toml
-    fi
-    if [ -f "./user/mapper/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/mapper/Cargo.toml
-    fi
-    if [ -f "./user/reducer/Cargo.toml" ]; then
-        cargo clean --manifest-path ./user/reducer/Cargo.toml
-    fi
-    cargo build --manifest-path ./user/file_reader/Cargo.toml --release
-    cargo build --manifest-path ./user/mapper/Cargo.toml --release
-    cargo build --manifest-path ./user/reducer/Cargo.toml --release
+    # if [ -f "./user/mapper/Cargo.toml" ]; then
+    #     cargo clean --manifest-path ./user/mapper/Cargo.toml
+    # fi
+    # if [ -f "./user/reducer/Cargo.toml" ]; then
+    #     cargo clean --manifest-path ./user/reducer/Cargo.toml
+    # fi
+    # cargo build --manifest-path ./user/mapper/Cargo.toml --release
+    # cargo build --manifest-path ./user/reducer/Cargo.toml --release
     # 循环执行十次
     for (( i=1; i<=EXECUTIONS; i++ ))
     do
